@@ -9,13 +9,7 @@ import numpy as np
 from keras.utils import pad_sequences
 import pandas as pd
 import matplotlib.pyplot as plt
-from app.utils.cleaner import tokenizing_text
-from app.utils.cleaner import cleaning_text
-from app.utils.cleaner import filtering_stopwords
-from app.utils.cleaner import stemming_text
-from app.utils.cleaner import sentence_make
-from app.utils.cleaner import model_loader
-
+from app.utils.cleaner import *
 seed = 10
 np.random.seed(seed)
 # start render
@@ -28,8 +22,11 @@ st.markdown(
     Model yang digunakan adalah LSTM.
     """
 )
-
-selectbox = st.selectbox("Silahkan pilih", ("", "Raw Text", "csv"))
+raw_text_state = False
+if raw_text_state:
+    selectbox = st.selectbox("Silahkan pilih", ("", "Raw Text", "csv"))
+else:
+    selectbox = st.selectbox("Silahkan pilih", ("", "csv"))
 model = model_loader()
 with open('app/resources/tokenizer/tokenizer.pickle', 'rb') as handler:
     tokenizer = pickle.load(handler)
@@ -76,52 +73,55 @@ elif selectbox == 'csv':
     if trigger:
         if file is not None:
             with st.spinner('Loading'):
-                df = pd.read_csv(file, sep=';')
-                df['processed'] = df.iloc[:, 0]
-                df['processed'] = df['processed'].apply(cleaning_text)
-                df['processed'] = df['processed'].apply(tokenizing_text)
-                df['processed'] = df['processed'].apply(stemming_text)
-                X = df['processed'].apply(sentence_make)
-                X = tokenizer.texts_to_sequences(X.values)
-                X = pad_sequences(X, maxlen=53)
-                y_pred = model.predict(X, verbose=0)
-                y_pred = np.argmax(y_pred, axis=1)
-                df['pred'] = y_pred
-                polarity_encode = {0: 'Negatif', 1: 'Netral', 2: 'Positif'}
-                df['pred'] = df['pred'].map(polarity_encode).values
+                try:
+                    df = pd.read_csv(file, sep=';')
+                    df['processed'] = df.iloc[:, 0]
+                    df['processed'] = df['processed'].apply(cleaning_text)
+                    df['processed'] = df['processed'].apply(tokenizing_text)
+                    df['processed'] = df['processed'].apply(stemming_text)
+                    X = df['processed'].apply(sentence_make)
+                    X = tokenizer.texts_to_sequences(X.values)
+                    X = pad_sequences(X, maxlen=53)
+                    y_pred = model.predict(X, verbose=0)
+                    y_pred = np.argmax(y_pred, axis=1)
+                    df['pred'] = y_pred
+                    polarity_encode = {0: 'Negatif', 1: 'Netral', 2: 'Positif'}
+                    df['pred'] = df['pred'].map(polarity_encode).values
 
-                st.write(f'Total Sentimen : {df.shape[0]}')
-                max_value = int(df['pred'].value_counts().argmax())
-                # st.write(max_value)
-                label_sentimen = ''
-                if max_value == 2:
-                    label_sentimen = 'Positif'
-                elif max_value == 1:
-                    label_sentimen = 'Netral'
-                else:
-                    label_sentimen = 'Negatif'
-                labels = ['Negatif', 'Positif', 'Netral']
-                color_bar = ['red', 'green', 'gray']
-                counts = df['pred'].value_counts()
-                fig, ax = plt.subplots(figsize=(6, 6))
-                # sizes = [row for row in df['pred'].value_counts()]
-                sizes = [counts[0], counts[1], counts[2]]
-                label = list(df['pred'].value_counts().index)
-                explode = (0.1, 0, 0)
-                ax.pie(x=counts.values, labels=labels, colors=color_bar,
-                       autopct='%1.1f%%',
-                       textprops={'fontsize': 11})
-                ax.set_title('sentimen terhadap sistem tilang elektronik di twitter', fontsize=12)
+                    st.write(f'Total Sentimen : {df.shape[0]}')
+                    max_value = int(df['pred'].value_counts().argmax())
+                    # st.write(max_value)
+                    label_sentimen = ''
+                    if max_value == 2:
+                        label_sentimen = 'Positif'
+                    elif max_value == 1:
+                        label_sentimen = 'Netral'
+                    else:
+                        label_sentimen = 'Negatif'
+                    labels = ['Negatif', 'Positif', 'Netral']
+                    color_bar = ['red', 'green', 'gray']
+                    counts = df['pred'].value_counts()
+                    fig, ax = plt.subplots(figsize=(6, 6))
+                    # sizes = [row for row in df['pred'].value_counts()]
+                    sizes = [counts[0], counts[1], counts[2]]
+                    label = list(df['pred'].value_counts().index)
+                    explode = (0.1, 0, 0)
+                    ax.pie(x=counts.values, labels=labels, colors=color_bar,
+                           autopct='%1.1f%%',
+                           textprops={'fontsize': 11})
+                    ax.set_title('sentimen terhadap sistem tilang elektronik di twitter', fontsize=12)
 
-                fig_bar, ax_bar = plt.subplots()
-                ax_bar.bar(counts.index, counts.values, color=color_bar)
-                for i in range(len(counts.values)):
-                    ax_bar.text(i, sizes[i], sizes[i], ha='center')
-                ax_bar.set_xlabel('Nilai Prediksi')
-                ax_bar.set_ylabel('Jumlah')
-                ax_bar.set_title('Diagram Batang Prediksi')
-                # legend = ax_bar.legend(labels=labels, loc='best')
-                st.write(f'Sentimen Terbanyak : {label_sentimen}')
-                st.pyplot(fig)
-                st.pyplot(fig_bar)
-                simpan = st.button('Simpan', disabled=True)
+                    fig_bar, ax_bar = plt.subplots()
+                    ax_bar.bar(counts.index, counts.values, color=color_bar)
+                    for i in range(len(counts.values)):
+                        ax_bar.text(i, sizes[i], sizes[i], ha='center')
+                    ax_bar.set_xlabel('Nilai Prediksi')
+                    ax_bar.set_ylabel('Jumlah')
+                    ax_bar.set_title('Diagram Batang Prediksi')
+                    # legend = ax_bar.legend(labels=labels, loc='best')
+                    st.write(f'Sentimen Terbanyak : {label_sentimen}')
+                    st.pyplot(fig)
+                    st.pyplot(fig_bar)
+                    simpan = st.button('Simpan', disabled=True)
+                except:
+                    st.error('File tidak sesuai atau rusak')
