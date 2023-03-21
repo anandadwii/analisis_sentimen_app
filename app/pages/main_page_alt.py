@@ -1,103 +1,49 @@
+# allow python to jump read another python file
+import os
+import sys
+sys.path.insert(1, os.getcwd())
+
 import streamlit as st
-from keras.models import load_model
 import pickle
-import string
-import re
-from nltk.tokenize import word_tokenize
-from Sastrawi.Stemmer.StemmerFactory import StemmerFactory
-from nltk.corpus import stopwords
-from Sastrawi.StopWordRemover.StopWordRemoverFactory import StopWordRemoverFactory
-import nltk
 import numpy as np
 from keras.utils import pad_sequences
 import pandas as pd
-import emoji
 import matplotlib.pyplot as plt
+from app.utils.cleaner import tokenizing_text
+from app.utils.cleaner import cleaning_text
+from app.utils.cleaner import filtering_stopwords
+from app.utils.cleaner import stemming_text
+from app.utils.cleaner import sentence_make
+from app.utils.cleaner import model_loader
 
-# nltk.download('stopwords')
-# nltk.download('punkt')
 seed = 10
 np.random.seed(seed)
-
-# render
+# start render
 st.set_page_config(page_title="Sentimen Analisis", page_icon="🤖")
-if "sentiment" not in st.session_state:
-    st.session_state.summary = ""
-if "error" not in st.session_state:
-    st.session_state.error = ""
-
-
-def remove_emoji():
-    """menghilangkan emoji"""
-    emojis = sorted(emoji.EMOJI_DATA, key=len, reverse=True)
-    pattern = u'(' + u'|'.join(re.escape(u) for u in emojis) + u')'
-    return re.compile(pattern)
-
-
-begone_emoji = remove_emoji()
-
-
-def cleaning_text(value):
-    result = value.lower().strip()
-    # result = remove_three_same_char(result)
-    result = ' '.join(result.split())
-    result = re.sub(r'(@|https?)\S+|#[A-Za-z0-9_]+', '', result).replace("&amp;", "dan")
-    result = re.sub(r'RT[\s]+', '', result)
-    # result = begone_emoji.sub(repl='', string=result)
-    result = re.sub(r'[0-9]+', '', result)
-    result = result.replace('\n', ' ')
-    result = result.translate(str.maketrans('', '', string.punctuation))
-    return result
-
-
-def tokenizing_text(value):
-    result = word_tokenize(value)
-    return result
-
-
-def filtering_stopwords(value):
-    list_stopwords = set(stopwords.words('indonesian'))
-    filtered = []
-    for text in value:
-        if text not in list_stopwords:
-            filtered.append(text)
-    return filtered
-
-
-def stemming_text(value):
-    factory = StemmerFactory()
-    stemmer = factory.create_stemmer()
-    return [stemmer.stem(word) for word in value]
-
-
-def sentence_make(tokenized):
-    return ' '.join(word for word in tokenized)
-
 
 st.title("Analisis Sentimen")
 st.markdown(
     """
     Aplikasi Website Mini untuk melakukan analisis sentimen dengan dataset sistem tilang elektronik di twitter.
+    Model yang digunakan adalah LSTM.
     """
 )
 
-selectbox = st.selectbox("Raw text or csv source", ("", "Raw Text", "csv"))
-model = load_model('app/resources/model/model.h5')
+selectbox = st.selectbox("Silahkan pilih", ("", "Raw Text", "csv"))
+model = model_loader()
 with open('app/resources/tokenizer/tokenizer.pickle', 'rb') as handler:
     tokenizer = pickle.load(handler)
 
 if selectbox == "Raw Text":
-    # raw_text = st.text_input(label="Sentimen:", max_chars=100)
     input_text = st.text_area(label='Sentimen', max_chars=100, height=100)
-    trigger = st.button('predict!')
+    trigger = st.button('Analisis!')
     if trigger:
-        # tokenize_text = raw_text
         raw_text = cleaning_text(input_text)
         raw_text = tokenizing_text(raw_text)
         # raw_text = filtering_stopwords(raw_text)
         raw_text = stemming_text(raw_text)
         raw_text = sentence_make(raw_text)
-        print(raw_text)
+        # print(raw_text)
         sequences = tokenizer.texts_to_sequences([raw_text])
         flat_ls = []
         for i in sequences:
@@ -105,7 +51,7 @@ if selectbox == "Raw Text":
                 flat_ls.append(j)
         data = pad_sequences(sequences, maxlen=53)
 
-        print(data)
+        # print(data)
         # prediction = model.predict(np.array(data, ndmin=2))
         prediction = model.predict([data], verbose=0)
         print(prediction)
@@ -114,15 +60,14 @@ if selectbox == "Raw Text":
         prediction_prob_positive = prediction[0][2]
         prediction_class = prediction.argmax(axis=-1)[0]
         # prediction_class = np.argmax(prediction, axis=1)
-        kontol = np.argmax(prediction, axis=1)
         # print(prediction_class )
         # st.header('Prediction using LSTM model')
         if prediction_class == 0:
-            st.error('Sentimen bernilai negatif')
+            st.error(f'Sentimen bernilai Negatif, {prediction_prob_negative}')
         if prediction_class == 1:
-            st.info('Sentimen bernilai netral')
+            st.info(f'Sentimen bernilai Netral, {prediction_prob_neutral}')
         if prediction_class == 2:
-            st.success('Sentimen bernilai postif')
+            st.success(f'Sentimen bernilai Postif, {prediction_prob_positive}')
 
 
 elif selectbox == 'csv':
@@ -132,10 +77,7 @@ elif selectbox == 'csv':
         if file is not None:
             with st.spinner('Loading'):
                 df = pd.read_csv(file, sep=';')
-                # st.write(f'Total Sentimen : {df.shape[0]}')
-                # print(df.iloc[:, 0])
                 df['processed'] = df.iloc[:, 0]
-                # print(df['processed'])
                 df['processed'] = df['processed'].apply(cleaning_text)
                 df['processed'] = df['processed'].apply(tokenizing_text)
                 df['processed'] = df['processed'].apply(stemming_text)
@@ -183,4 +125,3 @@ elif selectbox == 'csv':
                 st.pyplot(fig)
                 st.pyplot(fig_bar)
                 simpan = st.button('Simpan', disabled=True)
-
