@@ -145,11 +145,12 @@ elif selectbox == 'csv':
                 y_pred = model.predict(X, verbose=0)
                 y_pred = np.argmax(y_pred, axis=1)
                 df['pred'] = y_pred
-                polarity_encode = {0: 'Negatif', 1: 'Netral', 2: 'Postif'}
+                polarity_encode = {0: 'Negatif', 1: 'Netral', 2: 'Positif'}
                 df['pred'] = df['pred'].map(polarity_encode).values
+
                 st.write(f'Total Sentimen : {df.shape[0]}')
                 max_value = int(df['pred'].value_counts().argmax())
-                st.write(max_value)
+                # st.write(max_value)
                 label_sentimen = ''
                 if max_value == 2:
                     label_sentimen = 'Positif'
@@ -157,14 +158,29 @@ elif selectbox == 'csv':
                     label_sentimen = 'Netral'
                 else:
                     label_sentimen = 'Negatif'
+                labels = ['Negatif', 'Positif', 'Netral']
+                color_bar = ['red', 'green', 'gray']
+                counts = df['pred'].value_counts()
                 fig, ax = plt.subplots(figsize=(6, 6))
-                sizes = [row for row in df['pred'].value_counts()]
-                colors = ['#fc3232', '#827d7d', '#199410']
+                # sizes = [row for row in df['pred'].value_counts()]
+                sizes = [counts[0], counts[1], counts[2]]
                 label = list(df['pred'].value_counts().index)
                 explode = (0.1, 0, 0)
-                ax.pie(x=sizes, labels=label, autopct='%1.1f%%', textprops={'fontsize': 11})
+                ax.pie(x=counts.values, labels=labels, colors=color_bar,
+                       autopct='%1.1f%%',
+                       textprops={'fontsize': 11})
                 ax.set_title('sentimen terhadap sistem tilang elektronik di twitter', fontsize=12)
+
+                fig_bar, ax_bar = plt.subplots()
+                ax_bar.bar(counts.index, counts.values, color=color_bar)
+                for i in range(len(counts.values)):
+                    ax_bar.text(i, sizes[i], sizes[i], ha='center')
+                ax_bar.set_xlabel('Nilai Prediksi')
+                ax_bar.set_ylabel('Jumlah')
+                ax_bar.set_title('Diagram Batang Prediksi')
+                # legend = ax_bar.legend(labels=labels, loc='best')
                 st.write(f'Sentimen Terbanyak : {label_sentimen}')
                 st.pyplot(fig)
-
+                st.pyplot(fig_bar)
+                simpan = st.button('Simpan', disabled=True)
 
