@@ -55,6 +55,16 @@ def sentence_make(tokenized):
     return ' '.join(word for word in tokenized)
 
 
+def preprocessing_data(var, stopword: bool = False):
+    bucket = cleaning_text(var)
+    bucket = tokenizing_text(bucket)
+    if stopword:
+        bucket = filtering_stopwords(bucket)
+    bucket = stemming_text(bucket)
+    bucket = sentence_make(bucket)
+    return bucket
+
+
 @st.cache_resource
 def model_loader():
     return load_model('app/resources/model/model.h5')
