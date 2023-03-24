@@ -59,11 +59,12 @@ with open('app/resources/tokenizer/tokenizer.pickle', 'rb') as handler:
 #
 #
 # elif selectbox == 'csv':
-file = st.file_uploader(label="Upload csv file dengan separator ;", type="csv", accept_multiple_files=False)
-trigger = st.button('upload')
+file = st.file_uploader(label="Unggah CSV dengan separator ;", type="csv", accept_multiple_files=False)
+stop_word_check = st.checkbox('remove stopword', disabled=True, value=True)
+trigger = st.button('Unggah')
 if trigger and file is not None:
     try:
-        with st.spinner('Sedang Memproses'):
+        with st.spinner('Harap Tunggu'):
             # my_bar = st.progress(0.0, text='sedang membaca csv')
             df = pd.read_csv(file, sep=';')
             df['processed'] = df.iloc[:, 0]
@@ -86,15 +87,18 @@ if trigger and file is not None:
             color_bar = ['red', 'green', 'gray']
             counts = df['pred'].value_counts()
             sizes = [counts[0], counts[1], counts[2]]
+            st.write('#')
             st.subheader(f'Total Sentimen : {df.shape[0]}')
+            st.write('#')
             st.subheader(f'Sentimen Terbanyak : {label_sentimen}')
+            st.write('#')
             fig_pie, ax_pie = pie_chart(x=counts.values, label=labels, color=color_bar)
             fig_bar, ax_bar = bar_chart(x=counts.index, height=counts.values, sizes=sizes, color=color_bar)
             # pie_image = pie_chart(x=counts.values, label=labels, color=color_bar)
             # bar_image = bar_chart(x=counts.index, height=counts.values, sizes=sizes,color=color_bar)
-            st.pyplot(fig_pie, use_container_width=True)
-            st.pyplot(fig_bar, use_container_width=True)
-            simpan = st.button('Simpan', disabled=True)
+            st.pyplot(fig_pie)
+            st.pyplot(fig_bar)
+            save = st.button('Simpan', disabled=True)
 
     except:
         st.error('File tidak sesuai atau rusak')
