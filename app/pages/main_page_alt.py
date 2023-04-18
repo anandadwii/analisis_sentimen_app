@@ -81,13 +81,16 @@ elif selectbox == 'csv':
                 df['pred'] = y_pred
                 polarity_encode = {0: 'Negatif', 1: 'Netral', 2: 'Positif'}
                 df['pred'] = df['pred'].map(polarity_encode).values
+                print(df['pred'])
                 max_value = int(df['pred'].value_counts().argmax())
+                print(max_value)
                 # st.write(max_value)
                 label_sentimen = polarity_encode.get(max_value)
                 # my_bar.progress(1.0, 'selesai!')
                 labels = ['Negatif', 'Positif', 'Netral']
                 color_bar = ['red', 'green', 'gray']
                 counts = df['pred'].value_counts()
+                print(counts)
                 sizes = [counts[0], counts[1], counts[2]]
                 st.write('#')
                 st.subheader(f'Total Sentimen : {df.shape[0]}')
@@ -114,47 +117,45 @@ elif selectbox == 'live sentiment':
         # print(query_input)
         tweet_list = []
         try:
-            for i, tweet in enumerate(crawler.TwitterSearchScraper(query_input).get_items()):
-                clean_tweet = preprocessing_data(tweet.content)
-                tweet_list.append(clean_tweet)
-            _result = list(set(tweet_list))
-            df = pd.DataFrame(_result, columns=['processed'])
-            X = df['processed']
-            X = tokenizer.texts_to_sequences(X.values)
-            X = pad_sequences(X, maxlen=53)
-            y_pred = model.predict(X, verbose=0)
-            y_pred = np.argmax(y_pred, axis=1)
-            df['pred'] = y_pred
-            polarity_encode = {0: 'Negatif', 1: 'Netral', 2: 'Positif'}
-            df['pred'] = df['pred'].map(polarity_encode).values
-            max_value = int(df['pred'].value_counts().argmax())
-            # st.write(max_value)
-            label_sentimen = polarity_encode.get(max_value)
-            # my_bar.progress(1.0, 'selesai!')
-            labels = ['Negatif', 'Positif', 'Netral']
-            color_bar = ['red', 'green', 'gray']
-            counts = df['pred'].value_counts()
-            sizes = [0, 0, 0]
-            for x in counts.keys():
-                if x == 'Positif':
-                    sizes[1] = counts.get('Positif')
-                elif x == 'Negatif':
-                    sizes[0] = counts.get('Negatif')
-                elif x == 'Netral':
-                    sizes[2] = counts.get('Netral')
-            st.write('#')
-            st.subheader(f'Total Sentimen : {df.shape[0]}')
-            st.write('#')
-            st.subheader(f'Sentimen Terbanyak : {label_sentimen}')
-            st.write('#')
-            fig_pie, ax_pie = pie_chart(x=sizes, label=labels, color=color_bar)
-            fig_bar, ax_bar = bar_chart(x=counts.index, height=counts.values, sizes=sizes, color=color_bar)
-            st.pyplot(fig_pie)
-            st.pyplot(fig_bar)
-
-
+            with st.spinner('Harap Tunggu'):
+                for i, tweet in enumerate(crawler.TwitterSearchScraper(query_input).get_items()):
+                    clean_tweet = preprocessing_data(tweet.content)
+                    tweet_list.append(clean_tweet)
+                _result = list(set(tweet_list))
+                df = pd.DataFrame(_result, columns=['processed'])
+                X = df['processed']
+                X = tokenizer.texts_to_sequences(X.values)
+                X = pad_sequences(X, maxlen=53)
+                y_pred = model.predict(X, verbose=0)
+                y_pred = np.argmax(y_pred, axis=1)
+                df['pred'] = y_pred
+                polarity_encode = {0: 'Negatif', 1: 'Netral', 2: 'Positif'}
+                df['pred'] = df['pred'].map(polarity_encode).values
+                max_value = int(df['pred'].value_counts().argmax())
+                # st.write(max_value)
+                label_sentimen = polarity_encode.get(max_value)
+                # my_bar.progress(1.0, 'selesai!')
+                labels = ['Negatif', 'Positif', 'Netral']
+                color_bar = ['red', 'green', 'gray']
+                counts = df['pred'].value_counts()
+                sizes = [0, 0, 0]
+                for key, value in df['pred'].value_counts().items():
+                    if key == 'Positif':
+                        sizes[1] = value
+                    elif key == 'Negatif':
+                        sizes[0] = value
+                    elif key == 'Netral':
+                        sizes[2] = value
+                st.write('#')
+                st.subheader(f'Total Sentimen : {df.shape[0]}')
+                st.write('#')
+                st.write(f"Berdasarkan input keyword {query_keyword} mulai {start} hingga {end} menghasilkan sebaran "
+                         f"sentimen terbanyak yaitu {label_sentimen.upper()}")
+                st.write('#')
+                fig_pie, ax_pie = pie_chart(x=sizes, label=labels, color=color_bar)
+                fig_bar, ax_bar = bar_chart(x=labels, height=sizes, sizes=sizes, color=color_bar)
+                st.pyplot(fig_pie)
+                st.pyplot(fig_bar)
         except:
             traceback.print_exc()
 
-
-# ToDo: fix value tiap sentimen, masih berbeda. warna ama sentimen terbanyak masih ga sinkron
