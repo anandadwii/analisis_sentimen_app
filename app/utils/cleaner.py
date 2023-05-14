@@ -19,11 +19,17 @@ def remove_emoji():
 
 
 def tokenizing_text(value):
+    """
+    tokenize kalimat menjadi list kata
+    """
     result = word_tokenize(value)
     return result
 
 
 def cleaning_text(value):
+    """
+    cleaning kalimat
+    """
     result = value.lower().strip()
     # result = remove_three_same_char(result)
     result = ' '.join(result.split())
@@ -37,6 +43,7 @@ def cleaning_text(value):
 
 
 def filtering_stopwords(value):
+    """ menghilangkan stopword pada kalimat"""
     list_stopwords = set(stopwords.words('indonesian'))
     filtered = []
     for text in value:
@@ -46,16 +53,19 @@ def filtering_stopwords(value):
 
 
 def stemming_text(value):
+    """ mengubah kata menjadi kata dasar untuk menyeragamkan kata"""
     factory = StemmerFactory()
     stemmer = factory.create_stemmer()
     return [stemmer.stem(word) for word in value]
 
 
 def sentence_make(tokenized):
+    """ menggambungkan list kata menjadi string"""
     return ' '.join(word for word in tokenized)
 
 
 def preprocessing_data(var, stopword: bool = False):
+    """ menggabungkan seluruh function untuk melakukan preprocessing data"""
     bucket = cleaning_text(var)
     bucket = tokenizing_text(bucket)
     if stopword:
@@ -67,6 +77,7 @@ def preprocessing_data(var, stopword: bool = False):
 
 @st.cache_resource
 def model_loader():
+    """ fungsi untuk load model ke dalam streamlit framework"""
     return load_model('app/resources/model/model.h5')
 
 

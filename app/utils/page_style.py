@@ -8,4 +8,5 @@ hide_streamlit_style = """
 
 
 def remove_footer():
+    """ fungsi untuk menghilangkan footer made using streamlit"""
     st.markdown(hide_streamlit_style, unsafe_allow_html=True)
