@@ -13,6 +13,7 @@ import snscrape.modules.twitter as crawler
 sys.path.insert(1, os.getcwd())
 from app.utils.cleaner import *
 from app.utils.charts import pie_chart, bar_chart
+from app.utils.presentations import create_ppt
 import app.utils.page_style as ps
 
 seed = 10
@@ -35,12 +36,11 @@ else:
     selectbox = st.selectbox("Silahkan pilih", ("", "csv"))
 
 model = model_loader()
-with open('app/resources/tokenizer/tokenizer.pickle', 'rb') as handler:
-    tokenizer = pickle.load(handler)
+tokenizer = tokenizer_loader()
 
 if selectbox == "Raw Text":
     input_text = st.text_area(label='Sentimen', max_chars=100, height=100)
-    trigger = st.button('Analisis!')
+    trigger = st.button('Analisis!', disabled=True)
     if trigger:
         clean_text = preprocessing_data(input_text)
         sequences = tokenizer.texts_to_sequences([clean_text])
@@ -68,43 +68,55 @@ elif selectbox == 'csv':
     # stop_word_check = st.checkbox('remove stopword', disabled=True, value=True)
     trigger = st.button('Unggah')
     if trigger and file is not None:
-        try:
-            with st.spinner('Harap Tunggu'):
-                # my_bar = st.progress(0.0, text='sedang membaca csv')
-                df = pd.read_csv(file, sep=';')
-                df['processed'] = df.iloc[:, 0]
+        # try:
+        with st.spinner('Harap Tunggu'):
+            # my_bar = st.progress(0.0, text='sedang membaca csv')
+            try:
+                df = pd.read_csv(file, header=None, usecols=[0])
+                df['processed'] = df[0]
                 X = df['processed'].apply(preprocessing_data)
                 X = tokenizer.texts_to_sequences(X.values)
-                X = pad_sequences(X, maxlen=53)
+                X = pad_sequences(X, maxlen=57)
                 y_pred = model.predict(X, verbose=0)
                 y_pred = np.argmax(y_pred, axis=1)
                 df['pred'] = y_pred
                 polarity_encode = {0: 'Negatif', 1: 'Netral', 2: 'Positif'}
                 df['pred'] = df['pred'].map(polarity_encode).values
-                print(df['pred'])
                 max_value = int(df['pred'].value_counts().argmax())
-                print(max_value)
-                # st.write(max_value)
                 label_sentimen = polarity_encode.get(max_value)
-                # my_bar.progress(1.0, 'selesai!')
                 labels = ['Negatif', 'Positif', 'Netral']
                 color_bar = ['red', 'green', 'gray']
                 counts = df['pred'].value_counts()
-                print(counts)
-                sizes = [counts[0], counts[1], counts[2]]
+                # print(counts)
+                # sizes = [counts[0], counts[1], counts[2]]
+                sizes = [0, 0, 0]
+                for key, value in df['pred'].value_counts().items():
+                    if key == 'Positif':
+                        sizes[1] = value
+                    elif key == 'Negatif':
+                        sizes[0] = value
+                    elif key == 'Netral':
+                        sizes[2] = value
+                dict_data = {label: size for label, size in zip(labels, sizes)}
                 st.write('#')
                 st.subheader(f'Total Sentimen : {df.shape[0]}')
                 st.write('#')
-                st.subheader(f'Sentimen Terbanyak : {label_sentimen}')
+                highest_sentiment = max(dict_data, key=dict_data.get)
+                paragraph = f"Berdasarkan input csv, " \
+                            f"sebaran sentimen terbanyak yaitu {highest_sentiment}"
+                # st.subheader(f'Sentimen Terbanyak : {label_sentimen}')
+                st.write(paragraph)
                 st.write('#')
-                fig_pie, ax_pie = pie_chart(x=counts.values, label=labels, color=color_bar)
-                fig_bar, ax_bar = bar_chart(x=counts.index, height=counts.values, sizes=sizes, color=color_bar)
+                fig_pie, ax_pie = pie_chart(x=sizes, label=labels, color=color_bar)
+                fig_bar, ax_bar = bar_chart(x=labels, height=sizes, sizes=sizes, color=color_bar)
                 st.pyplot(fig_pie)
                 st.pyplot(fig_bar)
-                save = st.button('Simpan', disabled=True)
 
-        except:
-            st.error('File tidak sesuai atau rusak')
+                st.download_button(label="Download as pptx",
+                                   data=create_ppt(dict_data, paragraph),
+                                   file_name=f"Report CSV sentiment analyzer.pptx")
+            except:
+                st.error(traceback.print_exc())
 
 elif selectbox == 'live sentiment':
     with st.form(key='scrape_form'):
@@ -125,19 +137,17 @@ elif selectbox == 'live sentiment':
                 df = pd.DataFrame(_result, columns=['processed'])
                 X = df['processed']
                 X = tokenizer.texts_to_sequences(X.values)
-                X = pad_sequences(X, maxlen=53)
+                X = pad_sequences(X, maxlen=57)
                 y_pred = model.predict(X, verbose=0)
                 y_pred = np.argmax(y_pred, axis=1)
                 df['pred'] = y_pred
                 polarity_encode = {0: 'Negatif', 1: 'Netral', 2: 'Positif'}
                 df['pred'] = df['pred'].map(polarity_encode).values
-                max_value = int(df['pred'].value_counts().argmax())
-                # st.write(max_value)
-                label_sentimen = polarity_encode.get(max_value)
-                # my_bar.progress(1.0, 'selesai!')
+                # max_value = int(df['pred'].value_counts().argmax())
+                # label_sentimen = polarity_encode.get(max_value)
                 labels = ['Negatif', 'Positif', 'Netral']
                 color_bar = ['red', 'green', 'gray']
-                counts = df['pred'].value_counts()
+                # counts = df['pred'].value_counts()
                 sizes = [0, 0, 0]
                 for key, value in df['pred'].value_counts().items():
                     if key == 'Positif':
@@ -146,16 +156,23 @@ elif selectbox == 'live sentiment':
                         sizes[0] = value
                     elif key == 'Netral':
                         sizes[2] = value
+
+                dict_data = {label: size for label, size in zip(labels, sizes)}
                 st.write('#')
                 st.subheader(f'Total Sentimen : {df.shape[0]}')
                 st.write('#')
-                st.write(f"Berdasarkan input keyword {query_keyword} mulai {start} hingga {end} menghasilkan sebaran "
-                         f"sentimen terbanyak yaitu {label_sentimen.upper()}")
+                highest_sentiment = max(dict_data, key=dict_data.get)
+                paragraph = f"Berdasarkan input keyword {query_keyword} mulai {start} hingga {end} menghasilkan " \
+                            f"sebaran sentimen terbanyak yaitu {highest_sentiment}"
+                st.write(paragraph)
                 st.write('#')
                 fig_pie, ax_pie = pie_chart(x=sizes, label=labels, color=color_bar)
                 fig_bar, ax_bar = bar_chart(x=labels, height=sizes, sizes=sizes, color=color_bar)
                 st.pyplot(fig_pie)
                 st.pyplot(fig_bar)
+                st.download_button(label="Download as pptx",
+                                   data=create_ppt(dict_data, paragraph),
+                                   file_name=f"Report Live Sentiment.pptx")
         except:
+            st.write(traceback.print_exc())
             traceback.print_exc()
-
