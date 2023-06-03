@@ -1,5 +1,7 @@
 import emoji
 import re
+import numpy as np
+from keras.utils import pad_sequences
 from nltk.tokenize import word_tokenize
 import string
 from nltk.corpus import stopwords
@@ -9,6 +11,7 @@ from keras.models import load_model
 
 # nltk.download('stopwords')
 # nltk.download('punkt')
+import pickle
 
 
 def remove_emoji():
@@ -45,6 +48,7 @@ def cleaning_text(value):
 def filtering_stopwords(value):
     """ menghilangkan stopword pada kalimat"""
     list_stopwords = set(stopwords.words('indonesian'))
+    list_stopwords.remove("tidak")
     filtered = []
     for text in value:
         if text not in list_stopwords:
@@ -68,8 +72,7 @@ def preprocessing_data(var, stopword: bool = False):
     """ menggabungkan seluruh function untuk melakukan preprocessing data"""
     bucket = cleaning_text(var)
     bucket = tokenizing_text(bucket)
-    if stopword:
-        bucket = filtering_stopwords(bucket)
+    bucket = filtering_stopwords(bucket)
     bucket = stemming_text(bucket)
     bucket = sentence_make(bucket)
     return bucket
@@ -78,9 +81,16 @@ def preprocessing_data(var, stopword: bool = False):
 @st.cache_resource
 def model_loader():
     """ fungsi untuk load model ke dalam streamlit framework"""
-    return load_model('app/resources/model/model.h5')
+    return load_model('app/resources/model/balanced_manual_model.h5')
+
+
+@st.cache_resource
+def tokenizer_loader():
+    """fungsi untuk load tokenizer ke dalam cache website"""
+    with open('app/resources/tokenizer/manual_tokenizer.pickle', 'rb') as handler:
+        tokenizer = pickle.load(handler)
+    return tokenizer
 
 
 begone_emoji = remove_emoji()
-
 
