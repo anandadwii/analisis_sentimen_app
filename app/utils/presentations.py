@@ -10,12 +10,10 @@ import streamlit as st
 
 def create_ppt(dict_data: dict, paragraph: str, judul: str = 'Report pengolahan sentimen'):
     ppt = Presentation()
-
     slide = ppt.slides.add_slide(ppt.slide_layouts[5])
     # adding title
     title = slide.shapes.title
     title.text = judul
-
     # adding paragraph
     left = Inches(0.5)
     top = Inches(1.5)
@@ -29,12 +27,11 @@ def create_ppt(dict_data: dict, paragraph: str, judul: str = 'Report pengolahan 
     tf.auto_size = MSO_AUTO_SIZE.TEXT_TO_FIT_SHAPE
 
     total = sum(dict_data.values())
-    colors = [RGBColor(255, 0, 0), RGBColor(211, 211, 211), RGBColor(0, 128, 0)]
+    colors = [RGBColor(255, 0, 0), RGBColor(0, 128, 0)]
     # adding bar chart
     chart_data = CategoryChartData()
-    chart_data.categories = list(dict_data.keys())
+    chart_data.categories = ["Negatif", "Positif"]
     chart_data.add_series('Sebaran Sentimen', (
-        dict_data.get("Netral"),
         dict_data.get("Negatif"),
         dict_data.get("Positif")))
     x, y, cx, cy = Inches(0.5), Inches(3), Inches(3.75), Inches(3.75)
@@ -59,9 +56,9 @@ def create_ppt(dict_data: dict, paragraph: str, judul: str = 'Report pengolahan 
 
     # adding pie chart
     pie_chart_data = ChartData()
-    pie_chart_data.categories = list(dict_data.keys())
+    pie_chart_data.categories = ["Negatif", "Positif"]
     pie_chart_data.add_series('Sebaran', (
-        dict_data.get("Netral") / total, dict_data.get("Negatif") / total, dict_data.get("Positif") / total))
+        dict_data.get("Negatif") / total, dict_data.get("Positif") / total))
 
     pie_chart = slide.shapes.add_chart(
         XL_CHART_TYPE.PIE, Inches(5), Inches(3), Inches(4.5), Inches(4.5), pie_chart_data
