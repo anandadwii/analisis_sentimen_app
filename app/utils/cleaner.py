@@ -16,8 +16,10 @@ import pickle
 
 def remove_emoji():
     """menghilangkan emoji"""
-    emojis = sorted(emoji.EMOJI_DATA, key=len, reverse=True)
-    pattern = u'(' + u'|'.join(re.escape(u) for u in emojis) + u')'
+    emojis = sorted(emoji.EMOJI_DATA,
+                    key=len, reverse=True)
+    pattern = u'(' + u'|'.join(
+        re.escape(u) for u in emojis) + u')'
     return re.compile(pattern)
 
 
@@ -30,24 +32,24 @@ def tokenizing_text(value):
 
 
 def cleaning_text(value):
-    """
-    cleaning kalimat
-    """
     result = value.lower().strip()
     # result = remove_three_same_char(result)
     result = ' '.join(result.split())
-    result = re.sub(r'(@|https?)\S+|#[A-Za-z0-9_]+', '', result).replace("&amp;", "dan")
+    result = re.sub(r'(@|https?)\S+|#[A-Za-z0-9_]+',
+                    '', result).replace("&amp;", "dan")
     result = re.sub(r'RT[\s]+', '', result)
     result = begone_emoji.sub(repl='', string=result)
     result = re.sub(r'[0-9]+', '', result)
     result = result.replace('\n', ' ')
-    result = result.translate(str.maketrans('', '', string.punctuation))
+    result = result.translate(
+        str.maketrans('', '', string.punctuation))
     return result
 
 
 def filtering_stopwords(value):
     """ menghilangkan stopword pada kalimat"""
-    list_stopwords = set(stopwords.words('indonesian'))
+    list_stopwords = set(
+        stopwords.words('indonesian'))
     list_stopwords.remove("tidak")
     filtered = []
     for text in value:
@@ -94,3 +96,6 @@ def tokenizer_loader():
 
 begone_emoji = remove_emoji()
 
+@st.cache_resource
+def convert_df(df):
+    return df.to_csv(index=False, sep=';', header=True, index_label=None)
