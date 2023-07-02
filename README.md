@@ -1,36 +1,29 @@
 # analisis_sentimen_app
-Streamlit for Sentiment analysis App.
-Using LSTM deep learning 
+Sentiment analysis application with Streamlit framework and LSTM Deep Learning model.
+Model and tokenizer was built at [here](https://github.com/anandadwii/skripsi_bert_ngab).
 
-## Git
-using git version >=24 and dont forget to add at PATH environment table
-
-## initialize python virtual environtment
+## initialize python virtual environment
 `python -m venv venv`
 
 ## ensure your pip
 `python -m ensurepip`
 
 ## install requirements dependencies
-`pip install -r requirements.txt`
 
-dependecies details:
-- snscrape development version, `pip3 install git+https://github.com/JustAnotherArchivist/snscrape.git`
-- tensorflow-keras ver >= 2.11
-- python-pptx
-- matplotlib
-- numpy
-- streamlit
-- emoji
-- pandas
-- tqdm
+### install snscrape
+development version of snscrape:
+`pip3 install git+https://github.com/JustAnotherArchivist/snscrape.git`
+
+### install via txt
+`pip3 install -r requirements.txt`
+
 
 
 ## run streamlit
 run on terminal with venv
-`streamlit run app/pages/main_page.py`
+`streamlit run app/pages/main_page_alt.py`
 
-## limit uploaded file for dummies
+## limit uploaded file
 run on terminal with venv
-`streamlit run app/pages/main_page_alt.py --server.maxUploadSize [input your limit]`
+`streamlit run app/pages/main_page_alt.py --server.maxUploadSize [limit in MB]`
 
