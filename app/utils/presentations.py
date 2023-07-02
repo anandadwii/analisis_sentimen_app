@@ -15,10 +15,7 @@ def create_ppt(dict_data: dict, paragraph: str, judul: str = 'Report pengolahan 
     title = slide.shapes.title
     title.text = judul
     # adding paragraph
-    left = Inches(0.5)
-    top = Inches(1.5)
-    width = Inches(9)
-    height = Inches(2)
+    left, top, width, height = Inches(0.5), Inches(1.5), Inches(9), Inches(2)
     txBox = slide.shapes.add_textbox(left, top, width, height)
     tf = txBox.text_frame
     p = tf.add_paragraph()
