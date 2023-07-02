@@ -29,48 +29,17 @@ st.markdown(
     Model yang digunakan adalah LSTM.
     """
 )
-raw_text_state = True
-if raw_text_state:
-    selectbox = st.selectbox("Silahkan pilih", ("", "csv", "live sentiment"))
-else:
-    selectbox = st.selectbox("Silahkan pilih", ("", "csv"))
 
+# load model and tokenizer
 model = model_loader()
 tokenizer = tokenizer_loader()
 
-if selectbox == "Raw Text":
-    input_text = st.text_area(label='Sentimen', max_chars=100, height=100)
-    trigger = st.button('Analisis!', disabled=True)
-    if trigger:
-        clean_text = preprocessing_data(input_text)
-        sequences = tokenizer.texts_to_sequences([clean_text])
-        data = pad_sequences(sequences, maxlen=53)
-        print(data)
-        # # prediction = model.predict(np.array(data, ndmin=2))
-        # prediction = model.predict([data], verbose=0)
-        # prediction_prob_negative = prediction[0][0]
-        # prediction_prob_neutral = prediction[0][1]
-        # prediction_prob_positive = prediction[0][2]
-        # prediction_class = prediction.argmax(axis=-1)[0]
-        # # prediction_class = np.argmax(prediction, axis=1)
-        # # print(prediction_class )
-        # # st.header('Prediction using LSTM model')
-        # if prediction_class == 0:
-        #     st.error(f'Sentimen bernilai Negatif, {prediction_prob_negative}')
-        # if prediction_class == 1:
-        #     st.info(f'Sentimen bernilai Netral, {prediction_prob_neutral}')
-        # if prediction_class == 2:
-        #     st.success(f'Sentimen bernilai Postif, {prediction_prob_positive}')
-#
-#
-elif selectbox == 'csv':
+select_box = st.selectbox("Silahkan pilih", ("", "csv", "live sentiment"))
+if select_box == 'csv':
     file = st.file_uploader(label="Unggah CSV dengan separator ;", type="csv", accept_multiple_files=False)
-    # stop_word_check = st.checkbox('remove stopword', disabled=True, value=True)
     trigger = st.button('Unggah')
     if trigger and file is not None:
-        # try:
         with st.spinner('Harap Tunggu'):
-            # my_bar = st.progress(0.0, text='sedang membaca csv')
             try:
                 try:
                     df = pd.read_csv(file, header=None, usecols=[0])
@@ -90,8 +59,6 @@ elif selectbox == 'csv':
                 labels = ['Negatif', 'Positif']
                 color_bar = ['red', 'green']
                 counts = df['pred'].value_counts()
-                # print(counts)
-                # sizes = [counts[0], counts[1], counts[2]]
                 sizes = [0, 0]
                 for key, value in df['pred'].value_counts().items():
                     if key == 'Positif':
@@ -118,10 +85,17 @@ elif selectbox == 'csv':
                 st.download_button(label="Download as pptx",
                                    data=create_ppt(dict_data, paragraph),
                                    file_name=f"Report CSV sentiment analyzer.pptx")
+                st.download_button(
+                    label="Download as csv",
+                    data=convert_df(df),
+                    file_name=f"datasheet.csv",
+                    mime="text/csv",
+                    key='download-csv'
+                )
             except:
                 st.error(traceback.print_exc())
 
-elif selectbox == 'live sentiment':
+elif select_box == 'live sentiment':
     with st.form(key='scrape_form'):
         query_keyword = st.text_input(label='keyword untuk melakukan query')
         start = st.date_input(label='tanggal mulai')
@@ -134,7 +108,6 @@ elif selectbox == 'live sentiment':
             st.error("keyword untuk query tidak boleh kosong")
         else:
             query_input = f'{query_keyword} until:{end} since:{start}'
-            # print(query_input)
             tweet_list = []
             try:
                 with st.spinner('Harap Tunggu'):
@@ -181,7 +154,7 @@ elif selectbox == 'live sentiment':
                     st.download_button(
                         label="Download as pptx",
                         data=create_ppt(dict_data, paragraph),
-                        file_name=f"Report {str(selectbox)}.pptx")
+                        file_name=f"Report {str(select_box)}.pptx")
                     st.download_button(
                         label="Download as csv",
                         data=convert_df(df),
@@ -192,4 +165,3 @@ elif selectbox == 'live sentiment':
 
             except:
                 st.error(traceback.print_exc())
-                traceback.print_exc()
