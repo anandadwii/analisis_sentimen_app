@@ -98,4 +98,5 @@ begone_emoji = remove_emoji()
 
 @st.cache_resource
 def convert_df(df):
+    """ convert DataFrame to csv with ; separated value"""
     return df.to_csv(index=False, sep=';', header=True, index_label=None)
